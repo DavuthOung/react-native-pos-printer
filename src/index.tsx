@@ -17,6 +17,27 @@ const PosPrinter = NativeModules.PosPrinter
       }
     );
 
-export function multiply(a: number, b: number): Promise<number> {
-  return PosPrinter.multiply(a, b);
+export function checkBluetoothEnable(): Promise<{}> {
+  return PosPrinter.checkBluetoothEnable();
 }
+
+export function enableBluetooth(): Promise<{}> {
+  return PosPrinter.enableBluetooth();
+}
+
+export function disableBluetooth(): Promise<{}> {
+  return PosPrinter.disableBluetooth()
+}
+
+// export function scanDevices(): Promise<{}> {
+//   return PosPrinter.scanDevices();
+// }
+
+export function connect(address: string): Promise<{}> {
+  return PosPrinter.connect(address)
+}
+
+export function getDevicePaired(): Promise<{}> {
+  return PosPrinter.getDevicePaired();
+}
+

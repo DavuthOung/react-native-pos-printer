@@ -1,14 +1,23 @@
 package com.reactnativeposprinter;
 
 import android.app.Service;
+import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 
 import androidx.annotation.Nullable;
 
-public class BluetoothLE extends Service {
-  private Binder binder = new LocalBinder();
+public class BluetoothLeService extends Service {
+
+  private final Binder binder = new LocalBinder();
+
+  // initialize bluetooth not support
+  public boolean initialize() {
+    BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+    return bluetoothAdapter != null;
+  }
+
   @Nullable
   @Override
   public IBinder onBind(Intent intent) {
@@ -20,4 +29,6 @@ public class BluetoothLE extends Service {
       return BluetoothLeService.this;
     }
   }
+
+
 }

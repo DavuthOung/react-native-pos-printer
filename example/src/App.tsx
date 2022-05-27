@@ -1,31 +1,70 @@
 import * as React from 'react';
 
-import { StyleSheet, View, Text } from 'react-native';
-import { multiply } from 'react-native-pos-printer';
+import { 
+  StyleSheet,
+  View,
+  Button,
+  ScrollView,
+  TouchableOpacity,
+  Text 
+} from 'react-native';
+import { enableBluetooth ,disableBluetooth, connect,getDevicePaired} from 'react-native-pos-printer';
 
-export default function App() {
-  const [result, setResult] = React.useState<number | undefined>();
+export default class App extends React.Component{
+  state = {
+    list:  []
+  }
 
-  React.useEffect(() => {
-    multiply(3, 7).then(setResult);
-  }, []);
-
-  return (
+  render() {
+   
+    return (
     <View style={styles.container}>
-      <Text>Result: {result}</Text>
+     <Button
+        title="Enable"
+        onPress={async () => {
+          const result = await enableBluetooth();
+          const list = result.map((item: any) => JSON.parse(item))
+          this.setState({list})
+        }}
+      />
+      <Button
+        title="Disable"
+        onPress={() => {
+          disableBluetooth().then(result => {
+            console.log(result);
+          });
+        }}
+      />
+
+      <Button
+        title="Device paired"
+        onPress={() => {
+          getDevicePaired().then((result: any) => {
+            console.log(result);
+          });
+        }}
+      />
+      <ScrollView contentContainerStyle={{flexGrow: 1}}>
+        {
+          this.state.list.map((item: any,index: number) => (
+            <TouchableOpacity key={index} style={{padding: 10}} onPress={() => {
+              connect(item.address).then((result: any) => {
+                  console.log(result);
+              })
+            }}>
+              <Text>{item.name}</Text>
+              <Text>{item.address}</Text>
+            </TouchableOpacity>
+          ))
+        }
+      </ScrollView>
     </View>
-  );
+  );}
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  box: {
-    width: 60,
-    height: 60,
-    marginVertical: 20,
-  },
+    flex: 1
+  
+  }
 });

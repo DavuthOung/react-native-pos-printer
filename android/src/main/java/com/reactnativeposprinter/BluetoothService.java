@@ -1,5 +1,5 @@
 
-package cn.jystudio.bluetooth;
+package com.reactnativeposprinter;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -56,6 +56,10 @@ public class BluetoothService {
     public static final String TOAST = "toast";
 
     public static String ErrorMessage = "No_Error_Message";
+
+    public interface BluetoothServiceStateObserver {
+      void onBluetoothServiceStateChanged(int state, Map<String,Object> bundle);
+    }
 
     private static List<BluetoothServiceStateObserver> observers = new ArrayList<BluetoothServiceStateObserver>();
 
@@ -142,7 +146,7 @@ public class BluetoothService {
     }
 
 
-    public synchronized BluetoothDevice getConnectedDevice() { 
+    public synchronized BluetoothDevice getConnectedDevice() {
         BluetoothDevice connectedDevice = null;
         if(mConnectedThread!=null){
             connectedDevice = mConnectedThread.bluetoothDevice();

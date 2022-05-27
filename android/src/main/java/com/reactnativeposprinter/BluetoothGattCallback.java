@@ -1,2 +1,4 @@
-package com.reactnativeposprinter;public class BluetoothGattCallback {
+package com.reactnativeposprinter;
+
+public abstract class BluetoothGattCallback extends BluetoothGatt {
 }
