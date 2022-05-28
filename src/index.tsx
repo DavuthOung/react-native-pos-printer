@@ -41,3 +41,11 @@ export function getDevicePaired(): Promise<{}> {
   return PosPrinter.getDevicePaired();
 }
 
+export function printText(text: string): Promise<{}> {
+  return PosPrinter.printText(text);
+}
+
+export function initializeBluetooth(currentDevice: string): Promise<{}> {
+  return PosPrinter.initializeBluetooth(currentDevice);
+}
+

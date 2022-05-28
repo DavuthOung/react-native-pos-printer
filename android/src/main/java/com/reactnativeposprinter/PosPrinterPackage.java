@@ -15,8 +15,9 @@ public class PosPrinterPackage implements ReactPackage {
     @NonNull
     @Override
     public List<NativeModule> createNativeModules(@NonNull ReactApplicationContext reactContext) {
+        BluetoothService service = new BluetoothService(reactContext);
         List<NativeModule> modules = new ArrayList<>();
-        modules.add(new PosPrinterModule(reactContext));
+        modules.add(new PosPrinterModule(reactContext,service));
         return modules;
     }
 

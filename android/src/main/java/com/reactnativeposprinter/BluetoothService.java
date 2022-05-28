@@ -3,16 +3,13 @@ package com.reactnativeposprinter;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
 import android.util.Log;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
-import java.lang.reflect.Method;
 
 /**
  * This class does all the work for setting up and managing Bluetooth
@@ -31,19 +28,16 @@ public class BluetoothService {
     private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
     // Member fields
-    private BluetoothAdapter mAdapter;
+    private final BluetoothAdapter mAdapter;
 
     private ConnectedThread mConnectedThread;
     private int mState;
 
     // Constants that indicate the current connection state
     public static final int STATE_NONE = 0;       // we're doing nothing
-   // public static final int STATE_LISTEN = 1;     // now listening for incoming connections //feathure removed.
     public static final int STATE_CONNECTING = 2; // now initiating an outgoing connection
     public static final int STATE_CONNECTED = 3;  // now connected to a remote device
 
-
-    public static final int MESSAGE_STATE_CHANGE = 4;
     public static final int MESSAGE_READ = 5;
     public static final int MESSAGE_WRITE = 6;
     public static final int MESSAGE_DEVICE_NAME = 7;
@@ -53,15 +47,11 @@ public class BluetoothService {
     // Key names received from the BluetoothService Handler
     public static final String DEVICE_NAME = "device_name";
     public static final String DEVICE_ADDRESS = "device_address";
-    public static final String TOAST = "toast";
-
-    public static String ErrorMessage = "No_Error_Message";
-
     public interface BluetoothServiceStateObserver {
       void onBluetoothServiceStateChanged(int state, Map<String,Object> bundle);
     }
 
-    private static List<BluetoothServiceStateObserver> observers = new ArrayList<BluetoothServiceStateObserver>();
+    private static final List<BluetoothServiceStateObserver> observers = new ArrayList<BluetoothServiceStateObserver>();
 
     /**
      * Constructor. Prepares a new BTPrinter session.
@@ -71,15 +61,6 @@ public class BluetoothService {
     public BluetoothService(Context context) {
         mAdapter = BluetoothAdapter.getDefaultAdapter();
         mState = STATE_NONE;
-
-    }
-
-    public void addStateObserver(BluetoothServiceStateObserver observer) {
-        observers.add(observer);
-    }
-
-    public void removeStateObserver(BluetoothServiceStateObserver observer) {
-        observers.remove(observer);
     }
 
     /**
@@ -90,7 +71,7 @@ public class BluetoothService {
     private synchronized void setState(int state, Map<String, Object> bundle) {
         if (DEBUG) Log.d(TAG, "setState() " + getStateName(mState) + " -> " + getStateName(state));
         mState = state;
-        infoObervers(state, bundle);
+        infoObservers(state, bundle);
     }
     private String getStateName(int state){
         String name="UNKNOW:" + state;
@@ -104,7 +85,7 @@ public class BluetoothService {
         return name;
     }
 
-    private synchronized void infoObervers(int code, Map<String, Object> bundle) {
+    private synchronized void infoObservers(int code, Map<String, Object> bundle) {
         for (BluetoothServiceStateObserver ob : observers) {
             ob.onBluetoothServiceStateChanged(code, bundle);
         }
@@ -124,12 +105,12 @@ public class BluetoothService {
      * @param device The BluetoothDevice to connect
      */
     public synchronized void connect(BluetoothDevice device) {
-        if (DEBUG) Log.d(TAG, "connect to: " + device);
         BluetoothDevice connectedDevice = null;
+
         if(mConnectedThread!=null){
             connectedDevice = mConnectedThread.bluetoothDevice();
         }
-        if( mState==STATE_CONNECTED && connectedDevice!=null && connectedDevice.getAddress().equals(device.getAddress())){
+        if( mState==STATE_CONNECTED && connectedDevice !=null && connectedDevice.getAddress().equals(device.getAddress())){
             // connected already
             Map<String, Object> bundle = new HashMap<String, Object>();
             bundle.put(DEVICE_NAME, device.getName());
@@ -146,7 +127,7 @@ public class BluetoothService {
     }
 
 
-    public synchronized BluetoothDevice getConnectedDevice() {
+  public synchronized BluetoothDevice getConnectedDevice() {
         BluetoothDevice connectedDevice = null;
         if(mConnectedThread!=null){
             connectedDevice = mConnectedThread.bluetoothDevice();
@@ -179,7 +160,7 @@ public class BluetoothService {
         ConnectedThread r;
         // Synchronize a copy of the ConnectedThread
         synchronized (this) {
-            if (mState != STATE_CONNECTED) return;
+//            if (mState != STATE_CONNECTED) return;
             r = mConnectedThread;
         }
         r.write(out);
@@ -190,7 +171,7 @@ public class BluetoothService {
      */
     private void connectionFailed() {
         setState(STATE_NONE, null);
-        infoObervers(MESSAGE_UNABLE_CONNECT, null);
+      infoObservers(MESSAGE_UNABLE_CONNECT, null);
     }
 
     /**
@@ -198,7 +179,7 @@ public class BluetoothService {
      */
     private void connectionLost() {
         setState(STATE_NONE, null);
-        infoObervers(MESSAGE_CONNECTION_LOST, null);
+      infoObservers(MESSAGE_CONNECTION_LOST, null);
     }
 
     /**
@@ -304,7 +285,7 @@ public class BluetoothService {
                         // Send the obtained bytes to the UI Activity
                         bundle = new HashMap<String, Object>();
                         bundle.put("bytes", bytes);
-                        infoObervers(MESSAGE_READ, bundle);
+                      infoObservers(MESSAGE_READ, bundle);
                     } else {
                         Log.e(TAG, "disconnected");
                         connectionLost();
@@ -327,16 +308,11 @@ public class BluetoothService {
         public void write(byte[] buffer) {
             try {
                 mmOutStream.write(buffer);
-                mmOutStream.flush();//清空缓存
-               /* if (buffer.length > 3000) //
-                {
-                  byte[] readata = new byte[1];
-                  SPPReadTimeout(readata, 1, 5000);
-                }*/
+                mmOutStream.flush();
                 Log.i("BTPWRITE", new String(buffer, "GBK"));
                 Map<String, Object> bundle = new HashMap<String, Object>();
                 bundle.put("bytes", buffer);
-                infoObervers(MESSAGE_WRITE, bundle);
+              infoObservers(MESSAGE_WRITE, bundle);
             } catch (IOException e) {
                 Log.e(TAG, "Exception during write", e);
             }

@@ -8,12 +8,26 @@ import {
   TouchableOpacity,
   Text 
 } from 'react-native';
-import { enableBluetooth ,disableBluetooth, connect,getDevicePaired} from 'react-native-pos-printer';
+import { 
+  enableBluetooth ,
+  disableBluetooth, 
+  connect,
+  getDevicePaired,
+  initializeBluetooth
+} from 'react-native-pos-printer';
 
 export default class App extends React.Component{
   state = {
     list:  []
   }
+
+  componentDidMount(){
+    initializeBluetooth("DC:0D:30:87:24:11").then((result: any) => {
+      console.log(result);
+      
+    })
+  }
+
 
   render() {
    
@@ -23,8 +37,9 @@ export default class App extends React.Component{
         title="Enable"
         onPress={async () => {
           const result = await enableBluetooth();
-          const list = result.map((item: any) => JSON.parse(item))
-          this.setState({list})
+          // const list = result.map((item: any) => JSON.parse(item))
+          console.log(result)
+        
         }}
       />
       <Button
@@ -40,10 +55,14 @@ export default class App extends React.Component{
         title="Device paired"
         onPress={() => {
           getDevicePaired().then((result: any) => {
-            console.log(result);
+            const list = result.map((item: any) => JSON.parse(item))
+            console.log(list);
+            this.setState({list})
           });
         }}
       />
+
+
       <ScrollView contentContainerStyle={{flexGrow: 1}}>
         {
           this.state.list.map((item: any,index: number) => (
