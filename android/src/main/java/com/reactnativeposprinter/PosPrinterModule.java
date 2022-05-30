@@ -3,7 +3,6 @@ package com.reactnativeposprinter;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -11,15 +10,13 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Build;
 import android.os.Bundle;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
-import androidx.print.PrintHelper;
-
+import androidx.annotation.RequiresApi;
 import com.facebook.react.bridge.ActivityEventListener;
 import com.facebook.react.bridge.Arguments;
-import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
@@ -29,20 +26,13 @@ import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.module.annotations.ReactModule;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.io.InputStream;
-import java.io.OutputStream;
 import javax.annotation.Nullable;
 
 @ReactModule(name = PosPrinterModule.NAME)
@@ -58,21 +48,16 @@ public class PosPrinterModule extends ReactContextBaseJavaModule  implements Act
   public static final String EVENT_DEVICE_FOUND = "EVENT_DEVICE_FOUND";
   private static final String PROMISE_SCAN = "SCAN";
   public static final String EVENT_DEVICE_DISCOVER_DONE = "EVENT_DEVICE_DISCOVER_DONE";
-  private static final String PROMISE_CONNECT = "CONNECT";
   public static final String EVENT_CONNECTED = "EVENT_CONNECTED";
   public static final String EVENT_CONNECTION_LOST = "EVENT_CONNECTION_LOST";
   public static final String EVENT_UNABLE_CONNECT = "EVENT_UNABLE_CONNECT";
   public static final String EVENT_DEVICE_ALREADY_PAIRED = "EVENT_DEVICE_ALREADY_PAIRED";
   public static final String CONNECTION_ERROR = "CONNECTION_ERROR";
 
-  public static final int MESSAGE_CONNECTION_LOST = BluetoothService.MESSAGE_CONNECTION_LOST;
-  public static final int MESSAGE_UNABLE_CONNECT = BluetoothService.MESSAGE_UNABLE_CONNECT;
   public static final String DEVICE_NAME = BluetoothService.DEVICE_NAME;
-  public static final int MESSAGE_DEVICE_NAME = BluetoothService.MESSAGE_DEVICE_NAME;
   public static final int STATE_CONNECTED = BluetoothService.STATE_CONNECTED;
 
   // Name of the connected device
-  private String mConnectedDeviceName = null;
   private BluetoothAdapter mBluetoothAdapter = null;
 
   private static final Map<String, Promise> promiseMap = Collections.synchronizedMap(new HashMap<String, Promise>());
@@ -185,6 +170,60 @@ public class PosPrinterModule extends ReactContextBaseJavaModule  implements Act
       } else {
           promise.resolve(!adapter.isEnabled() || adapter.disable());
       }
+  }
+
+  @RequiresApi(api = Build.VERSION_CODES.O)
+  @ReactMethod
+  public void printPic(String file ,ReadableMap options, Promise promise){
+    int width = 384;
+    int leftPadding = 0;
+
+    if(options!=null){
+      width = options.getInt("width");
+      leftPadding = options.getInt("left");
+    }
+
+    Base64.Decoder dec = Base64.getDecoder();
+    byte[] bytes = dec.decode(file);
+    Bitmap mBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+
+    int nMode = 0;
+    if (mBitmap != null) {
+      byte[] data = PrintPicture.POS_PrintBMP(mBitmap, width, nMode, leftPadding);
+      sendDataByte(Command.ESC_Init);
+      sendDataByte(Command.LF);
+      sendDataByte(data);
+      sendDataByte(PrinterCommand.POS_Set_PrtAndFeedPaper(30));
+      sendDataByte(PrinterCommand.POS_Set_Cut(1));
+      sendDataByte(PrinterCommand.POS_Set_PrtInit());
+    }
+    promise.resolve("printed");
+  }
+
+  @ReactMethod
+  public void printerAlign(int align,final Promise promise){
+    if(sendDataByte(PrinterCommand.POS_S_Align(align))){
+      promise.resolve(null);
+    }else{
+      promise.reject("COMMAND_NOT_SEND");
+    }
+  }
+
+  @ReactMethod
+  public void setBlob(int weight,final Promise promise) {
+    if(sendDataByte(PrinterCommand.POS_Set_Bold(weight))){
+      promise.resolve(null);
+    }else{
+      promise.reject("COMMAND_NOT_SEND");
+    }
+  }
+
+  private boolean sendDataByte(byte[] data) {
+    if (data==null || mService.getState() != BluetoothService.STATE_CONNECTED) {
+      return false;
+    }
+    mService.write(data);
+    return true;
   }
 
   @ReactMethod

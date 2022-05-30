@@ -41,11 +41,25 @@ export function getDevicePaired(): Promise<{}> {
   return PosPrinter.getDevicePaired();
 }
 
-export function printText(text: string): Promise<{}> {
-  return PosPrinter.printText(text);
+export function printPic(base64: string,options: {}): Promise<{}> {
+  return PosPrinter.printPic(base64,options);
 }
 
 export function initializeBluetooth(currentDevice: string): Promise<{}> {
   return PosPrinter.initializeBluetooth(currentDevice);
 }
+
+export function printerAlign(align: number): Promise<{}> {
+  return PosPrinter.printerAlign(align);
+}
+
+export function setBlob(weight: number): Promise<{}> {
+  return PosPrinter.setBlob(weight);
+}
+
+export function setWidth(width: number): Promise<{}> {
+  return PosPrinter.setWidth(width);
+}
+
+
 

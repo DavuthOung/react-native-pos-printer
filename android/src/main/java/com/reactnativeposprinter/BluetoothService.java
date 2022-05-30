@@ -51,6 +51,10 @@ public class BluetoothService {
       void onBluetoothServiceStateChanged(int state, Map<String,Object> bundle);
     }
 
+    public UUID getUUID() {
+      return MY_UUID;
+    }
+
     private static final List<BluetoothServiceStateObserver> observers = new ArrayList<BluetoothServiceStateObserver>();
 
     /**
@@ -126,7 +130,6 @@ public class BluetoothService {
         }
     }
 
-
   public synchronized BluetoothDevice getConnectedDevice() {
         BluetoothDevice connectedDevice = null;
         if(mConnectedThread!=null){
@@ -160,7 +163,7 @@ public class BluetoothService {
         ConnectedThread r;
         // Synchronize a copy of the ConnectedThread
         synchronized (this) {
-//            if (mState != STATE_CONNECTED) return;
+            if (mState != STATE_CONNECTED) return;
             r = mConnectedThread;
         }
         r.write(out);
